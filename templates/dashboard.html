@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Личный кабинет | Electronic Diary Cloud</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dark-theme">
+<div class="container">
+    <div class="topbar">
+        <div>
+            <div class="badge">Панель управления</div>
+            <p style="margin:8px 0 4px 0;"><b>Пользователь:</b> {{ full_name }}</p>
+            <div class="role-line">
+                {% if role == "admin" %}
+                    <span class="role-badge role-admin">👨‍💼 admin</span>
+                {% elif role == "deputy" %}
+                    <span class="role-badge role-deputy">🏫 deputy</span>
+                {% elif role == "teacher" %}
+                    <span class="role-badge role-teacher">👩‍🏫 teacher</span>
+                {% elif role == "student" %}
+                    <span class="role-badge role-student">🎓 student</span>
+                {% elif role == "parent" %}
+                    <span class="role-badge role-parent">👨‍👩‍👧 parent</span>
+                {% else %}
+                    <span class="role-badge">👤 {{ role }}</span>
+                {% endif %}
+
+                <button id="themeBtn" type="button" class="btn btn-secondary">
+                    🌓 Сменить тему
+                </button>
+            </div>            
+            <p style="margin:0;"><b>Сегодня:</b> {{ today }} | <b>Завтра:</b> {{ tomorrow }}</p>
+        </div>
+        <a class="btn btn-secondary" href="/logout">Выйти</a>
+    </div>
+
+    {% if role == "admin" %}
+    <div class="grid">
+        <div class="card">
+            <h2>Добавить учителя</h2>
+            <form action="/add_teacher" method="post">
+                <div class="form-group"><input name="full_name" placeholder="ФИО учителя" required></div>
+                <div class="form-group"><input name="username" placeholder="Логин" required></div>
+                <div class="form-group"><input name="password" placeholder="Пароль" required></div>
+                <div class="form-group">
+                    <select name="class_name" id="scheduleClass" required>
+                        <option value="">Выберите класс</option>
+                        {% for i in range(1,12) %}
+                        <option value="{{i}}A">{{i}}A</option>
+                        <option value="{{i}}B">{{i}}B</option>
+                        <option value="{{i}}C">{{i}}C</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit">Добавить учителя</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Добавить ученика</h2>
+            <form action="/add_student" method="post">
+                <div class="form-group"><input name="full_name" placeholder="ФИО ученика" required></div>
+                <div class="form-group"><input name="username" placeholder="Логин" required></div>
+                <div class="form-group"><input name="password" placeholder="Пароль" required></div>
+                <div class="form-group">
+                    <select name="class_name" required style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
+                        <option value="">Выберите класс</option>
+                        {% for c in classes %}
+                        <option value="{{ c[0] }}">{{ c[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit">Добавить ученика</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Характеристика классов</h2>
+        <form action="/save_class_note" method="post">
+            <div class="form-group">
+                <select name="class_name" required style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
+                    <option value="">Выберите класс</option>
+                    {% for c in classes %}
+                    <option value="{{ c[0] }}">{{ c[0] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <textarea name="class_note" placeholder="Введите характеристику класса" style="width:100%; height:100px; border-radius:8px;"></textarea>
+            </div>
+            <button type="submit">Сохранить характеристику класса</button>
+        </form>
+
+        {% if class_notes %}
+        <div style="margin-top:20px;">
+            {% for cn in class_notes %}
+            <div style="margin-bottom:10px; padding:14px; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.14); border-radius:14px; color:#0f172a; font-weight:500;">
+                <b style="color:#0f172a;">{{ cn[0] }}</b><br>
+                <span style="color:#0f172a;">{{ cn[1] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Учителя</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Логин</th>
+                    <th>Класс</th>
+                    <th>Изменить</th>
+                    <th>Характеристика</th>
+                    <th>Удалить</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in teachers %}
+                <tr>
+                    <td>{{ t[1] }}</td>
+                    <td>{{ t[2] }}</td>
+                    <td>{{ t[3] }}</td>
+                    <td>
+                        <form action="/update_teacher" method="post">
+                            <input type="hidden" name="teacher_id" value="{{ t[0] }}">
+                            <input name="new_name" placeholder="Новое ФИО" required>
+                            <button type="submit">Сохранить</button>
+                        </form>
+                    </td>
+                    <td>
+                        <div style="margin-bottom:10px; padding:14px; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.14); border-radius:14px; color:#0f172a; font-weight:500;">
+                            <b style="color:#0f172a;">Текущая:</b><br>
+                            <span style="color:#0f172a;">{{ t[4] }}</span>
+                        </div>
+                        <form action="/save_teacher_note" method="post">
+                            <input type="hidden" name="teacher_username" value="{{ t[2] }}">
+                            <textarea name="teacher_note" placeholder="Введите характеристику" style="width:100%; height:80px; border-radius:8px;"></textarea>
+                            <button type="submit">Сохранить</button>
+                        </form>
+                        <a class="btn btn-danger" href="/delete_teacher_note/{{ t[2] }}">Удалить</a>
+                    </td>
+                    <td>
+                        <a class="btn btn-danger" href="/delete_teacher/{{ t[0] }}">Удалить</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Контакты обратной связи</h2>
+        {% for f in feedback_contacts %}
+        <p><b>{{ f[0] }}</b>: {{ f[1] }}</p>
+        {% endfor %}
+    </div>
+
+    {% if feedback_messages %}
+    <div class="card" style="margin-top:20px;">
+        <h2>Сообщения обратной связи</h2>
+        {% for m in feedback_messages %}
+        <div style="padding:12px; margin-bottom:10px; background:#f8fafc; border-radius:10px;">
+            <p><b>Имя:</b> {{ m[0] }}</p>
+            <p><b>Email:</b> {{ m[1] }}</p>
+            <p><b>Сообщение:</b> {{ m[2] }}</p>
+            <p><b>Дата:</b> {{ m[3] }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if role == "deputy" %}
+    <div class="grid">
+        <div class="card">
+            <h2>Управление расписанием</h2>
+            <form action="/add_schedule" method="post">
+                <select id="scheduleClass" name="class_name" required>
+                    <option value="">Выберите класс</option>
+                    {% for i in range(1,12) %}
+                    <option value="{{i}}A">{{i}}A</option>
+                    <option value="{{i}}B">{{i}}B</option>
+                    <option value="{{i}}C">{{i}}C</option>
+                    {% endfor %}
+                </select>
+                <br><br>
+                <select name="week_day">
+                    <option>Понедельник</option>
+                    <option>Вторник</option>
+                    <option>Среда</option>
+                    <option>Четверг</option>
+                    <option>Пятница</option>
+                </select>
+                <br><br>
+                <select name="lesson_number">
+                    <option value="1">1 урок — 08:00-08:45</option>
+                    <option value="2">2 урок — 08:55-09:40</option>
+                    <option value="3">3 урок — 09:50-10:35</option>
+                    <option value="4">4 урок — 10:55-11:40</option>
+                    <option value="5">5 урок — 11:50-12:35</option>
+                </select>
+                <br><br>
+                <select id="scheduleSubject" name="subject" required>
+                    <option value="">Выберите предмет</option>
+                </select>
+                <br><br>
+                <button type="submit">Сохранить расписание</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Контакты обратной связи</h2>
+            {% for f in feedback_contacts %}
+            <p><b>{{ f[0] }}</b>: {{ f[1] }}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Характеристика классов</h2>
+        {% if class_notes %}
+            {% for cn in class_notes %}
+            <div class="note-box">
+                <b>{{ cn[0] }}</b><br>
+                <span>{{ cn[1] }}</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>Характеристики классов пока не заполнены.</p>
+        {% endif %}
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Все расписания</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Класс</th>
+                    <th>День</th>
+                    <th>Урок</th>
+                    <th>Время</th>
+                    <th>Предмет</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sch in schedule_list %}
+                <tr>
+                    <td>{{ sch[0] }}</td>
+                    <td>{{ sch[1] }}</td>
+                    <td>{{ sch[2] }}</td>
+                    <td>{{ sch[3] }}</td>
+                    <td>{{ sch[4] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if role == "teacher" %}
+    <div class="grid">
+        <div class="card">
+            <h2>Информация о классе</h2>
+            <p><b>Класс:</b> {{ selected_class }}</p>
+            <p><b>Классный руководитель:</b> {{ class_teacher }}</p>
+            <p><b>Характеристика класса:</b><br>{{ class_characteristic }}</p>
+
+            <h3 style="margin-top:15px;">Удобный выбор ученика</h3>
+            <form action="/add" method="post">
+                <div class="form-group">
+                    <select name="student_id" required style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
+                        <option value="">Выберите ученика</option>
+                        {% for s in students %}
+                        <option value="{{ s[0] }}">{{ s[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <select name="subject" required style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
+                        <option value="">Выберите предмет</option>
+                        {% for sub in subjects %}
+                        <option value="{{ sub[0] }}">{{ sub[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <input name="grade" type="number" min="1" max="5" placeholder="Оценка" required>
+                </div>
+
+                <button type="submit">Поставить оценку</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Предметы класса</h2>
+            <ul>
+                {% for sub in subjects %}
+                <li>{{ sub[0] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="grid" style="margin-top:20px;">
+        <div class="card">
+            <h2>Добавить домашнее задание</h2>
+            <form action="/add_homework" method="post">
+                <div class="form-group">
+                    <select name="subject" required style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
+                        <option value="">Выберите предмет</option>
+                        {% for sub in subjects %}
+                        <option value="{{ sub[0] }}">{{ sub[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input name="task_text" placeholder="Текст домашнего задания" required>
+                </div>
+                <div class="form-group">
+                    <select name="due_day" required style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:10px;">
+                        <option value="Сегодня">Сегодня</option>
+                        <option value="Завтра">Завтра</option>
+                    </select>
+                </div>
+                <button type="submit">Сохранить ДЗ</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Расписание класса</h2>
+            {% for sch in schedule_list %}
+            <p><b>{{ sch[0] }}</b> — урок {{ sch[1] }} — {{ sch[2] }} — {{ sch[3] }}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ТУТ ИЗМЕНЕНИЯ: ТАБЛИЦА УПРАВЛЕНИЯ ДОМАШНИМ ЗАДАНИЕМ ДЛЯ УЧИТЕЛЯ -->
+    <div class="card" style="margin-top:20px;">
+        <h2>Управление домашним заданием</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Предмет</th>
+                    <th>Задание</th>
+                    <th>Срок</th>
+                    <th>Изменить</th>
+                    <th>Удалить</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hw in homework_list %}
+                <tr>
+                    <td>{{ hw[1] }}</td> <!-- Предмет -->
+                    <td>{{ hw[2] }}</td> <!-- Текст задания -->
+                    <td>{{ hw[3] }}</td> <!-- Срок -->
+                    <td>
+                        <form action="/update_homework" method="post" style="display:flex; flex-direction:column; gap:5px;">
+                            <input type="hidden" name="hw_id" value="{{ hw[0] }}">
+                            <textarea name="new_task_text" placeholder="Новый текст ДЗ" required style="padding:8px; border-radius:8px; border:1px solid #cbd5e1; width:100%; box-sizing:border-box; resize:vertical; min-height:40px;">{{ hw[2] }}</textarea>
+                            <button type="submit" style="padding:6px; font-size:13px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">Сохранить</button>
+                        </form>
+                    </td>
+                    <td>
+                        <a class="btn btn-danger" href="/delete_homework/{{ hw[0] }}">Удалить</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <table class="table" style="margin-top:20px;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Класс</th>
+                <th>Предмет</th>
+                <th>Оценка</th>
+                <th>Действие</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for g in grades %}
+            <tr>
+                <td>{{ g[0] }}</td>
+                <td>{{ g[1] }}</td>
+                <td>{{ g[2] }}</td>
+                <td>{{ g[3] }}</td>
+                <td><a class="btn btn-danger" href="/delete/{{ g[0] }}">Удалить</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Обратная связь</h2>
+        {% for f in feedback_contacts %}
+        <p><b>{{ f[0] }}</b>: {{ f[1] }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if role == "parent" %}
+    <div class="card">
+        <h2>Кабинет родителя</h2>
+        <p><b>Ребёнок:</b> {{ child_name }}</p>
+        <p><b>Класс:</b> {{ selected_class }}</p>
+        <p><b>Классный руководитель:</b> {{ class_teacher }}</p>
+        <p><b>Характеристика класса:</b><br>{{ class_characteristic }}</p>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Оценки ребенка</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Класс</th>
+                    <th>Предмет</th>
+                    <th>Оценка</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in grades %}
+                <tr>
+                    <td>{{ g[0] }}</td>
+                    <td>{{ g[1] }}</td>
+                    <td>{{ g[2] }}</td>
+                    <td>{{ g[3] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Домашнее задание</h2>
+        {% for hw in homework_list %}
+        <p><b>{{ hw[1] }}</b> — {{ hw[2] }} ({{ hw[3] }})</p>
+        {% endfor %}
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Расписание</h2>
+        {% for sch in schedule_list %}
+        <p><b>{{ sch[0] }}</b> — урок {{ sch[1] }} — {{ sch[2] }} — {{ sch[3] }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if role == "student" %}
+    <div class="card">
+        <h2>Мой класс</h2>
+        <p><b>Класс:</b> {{ selected_class }}</p>
+        <p><b>Классный руководитель:</b> {{ class_teacher }}</p>
+        <p><b>Характеристика класса:</b><br>{{ class_characteristic }}</p>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Домашнее задание</h2>
+        {% for hw in homework_list %}
+        <p><b>{{ hw[1] }}</b> — {{ hw[2] }} ({{ hw[3] }})</p>
+        {% endfor %}
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Расписание</h2>
+        {% for sch in schedule_list %}
+        <p><b>{{ sch[0] }}</b> — урок {{ sch[1] }} — {{ sch[2] }} — {{ sch[3] }}</p>
+        {% endfor %}
+    </div>
+
+    <table class="table" style="margin-top:20px;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Класс</th>
+                <th>Предмет</th>
+                <th>Оценка</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for g in grades %}
+            <tr>
+                <td>{{ g[0] }}</td>
+                <td>{{ g[1] }}</td>
+                <td>{{ g[2] }}</td>
+                <td>{{ g[3] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="card" style="margin-top:20px;">
+        <h2>Обратная связь</h2>
+        {% for f in feedback_contacts %}
+        <p><b>{{ f[0] }}</b>: {{ f[1] }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ВАЖНО: файл должен заканчиваться этим кодом -->
+
+<!-- Кнопка (кружок) для вызова AI помощника -->
+<button id="aiToggleBtn" onclick="toggleAIWidget()" style="
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:linear-gradient(90deg,#2563eb,#7c3aed);
+    color:white;
+    border:none;
+    font-size:28px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.4);
+    cursor:pointer;
+    z-index:9998;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: transform 0.2s;
+">🤖</button>
+
+<!-- Выезжающая боковая панель AI -->
+<div id="ai-widget" style="
+    position:fixed;
+    top:0;
+    right:-400px; /* Спрятана за краем экрана по умолчанию */
+    width:340px;
+    height:100vh; /* На всю высоту экрана */
+    background:linear-gradient(180deg,#0b1020,#111827);
+    color:white;
+    padding:20px;
+    box-shadow:-10px 0 50px rgba(0,0,0,.5);
+    z-index:9999;
+    transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Плавная анимация выезда */
+    display:flex;
+    flex-direction:column;
+    box-sizing:border-box;
+">
+    <!-- Шапка виджета с кнопкой закрытия -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h3 style="margin:0;">🤖 AI помощник</h3>
+        <button onclick="toggleAIWidget()" style="background:none; border:none; color:white; font-size:28px; cursor:pointer; padding:0; line-height:1;">&times;</button>
+    </div>
+
+    <!-- Контейнер сообщений (растягивается на всё свободное место) -->
+    <div id="chatBox" style="
+        flex-grow:1;
+        overflow-y:auto;
+        background:rgba(255,255,255,.06);
+        padding:12px;
+        border-radius:14px;
+        margin-bottom:15px;
+    "></div>
+
+    <input id="msg" placeholder="Спроси..." style="width:100%;padding:14px;border-radius:10px;margin-bottom:10px;border:none;box-sizing:border-box;">
+    
+    <button onclick="sendMsg()" style="width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(90deg,#2563eb,#7c3aed);color:white;font-weight:bold;cursor:pointer;">
+        Отправить
+    </button>
+</div>
+
+<script>
+    /* ---------- АНИМАЦИЯ ПАНЕЛИ AI ---------- */
+    function toggleAIWidget() {
+        const widget = document.getElementById("ai-widget");
+        if (widget.style.right === "0px") {
+            widget.style.right = "-400px";
+        } else {
+            widget.style.right = "0px";
+        }
+    }
+
+    /* ---------- ТЕМА ---------- */
+    document.addEventListener("DOMContentLoaded", function () {
+        const body = document.body;
+        const themeBtn = document.getElementById("themeBtn");
+        const savedTheme = localStorage.getItem("theme");
+
+        if(savedTheme === "light"){
+            body.classList.add("light-theme");
+        }
+
+        if(themeBtn){
+            themeBtn.addEventListener("click",function(){
+                body.classList.toggle("light-theme");
+                if(body.classList.contains("light-theme")){
+                    localStorage.setItem("theme","light");
+                } else {
+                    localStorage.setItem("theme","dark");
+                }
+            });
+        }
+    });
+
+    /* ---------- РАСПИСАНИЕ / ПРЕДМЕТЫ ---------- */
+    document.addEventListener("DOMContentLoaded", function(){
+        const map = {
+            "1A":["Математика","Русский язык","Чтение","Окружающий мир"],
+            "1B":["Математика","Русский язык","Чтение"],
+            "1C":["Математика","Русский язык"],
+            "2A":["Математика","Русский язык","Литература","Познание мира"],
+            "2B":["Математика","Русский язык","Литература"],
+            "2C":["Математика","Русский язык"],
+            "3A":["Математика","Русский","Литература","Английский"],
+            "3B":["Математика","Русский","Английский"],
+            "3C":["Математика","Русский"],
+            "4A":["Математика","Русский","История","Английский"],
+            "4B":["Математика","Русский","История"],
+            "4C":["Математика","Русский"],
+            "5A":["Математика","Биология","История","Информатика"],
+            "5B":["Математика","Русский","Биология"],
+            "5C":["Математика","Русский"],
+            "6A":["Алгебра","География","История"],
+            "6B":["Алгебра","Биология"],
+            "6C":["Алгебра","Русский"],
+            "7A":["Алгебра","Геометрия","Физика","Информатика"],
+            "7B":["Алгебра","Физика","История"],
+            "7C":["Алгебра","Геометрия"],
+            "8A":["Алгебра","Геометрия","Химия"],
+            "8B":["Алгебра","Физика"],
+            "8C":["Алгебра","Биология"],
+            "9A":["Алгебра","Физика","Химия"],
+            "9B":["Алгебра","Геометрия","Информатика"],
+            "9C":["Алгебра","История"],
+            "10A":["Алгебра","Геометрия","Физика","Информатика"],
+            "10B":["Алгебра","Химия","Биология"],
+            "10C":["Алгебра","Физика","Информатика"],
+            "11A":["Математика","Физика","Информатика"],
+            "11B":["Математика","Химия"],
+            "11C":["Математика","История"]
+        };
+
+        const cls = document.getElementById("scheduleClass");
+        const subj = document.getElementById("scheduleSubject");
+
+        function fillSubjects(){
+            if (!cls || !subj) return;
+            
+            let currentClass = cls.value;
+            subj.innerHTML = "";
+
+            if(!map[currentClass]){
+                let o = document.createElement("option");
+                o.text = "Выберите предмет";
+                o.value = "";
+                subj.add(o);
+                return;
+            }
+
+            for(let i=0; i < map[currentClass].length; i++){
+                let opt = document.createElement("option");
+                opt.value = map[currentClass][i];
+                opt.text = map[currentClass][i];
+                subj.add(opt);
+            }
+        }
+
+        if (cls) {
+            cls.onchange = fillSubjects;
+            fillSubjects();
+        }
+    });
+
+    /* ---------- AI ЧАТ ---------- */
+    function sendMsg(){
+        let msgInput = document.getElementById("msg");
+        let msg = msgInput.value.trim();
+
+        if(!msg) return;
+
+        let chat = document.getElementById("chatBox");
+
+        // Сообщение пользователя
+        chat.innerHTML += `
+            <div style="margin-bottom:10px; text-align:right;">
+                <div style="
+                    display:inline-block;
+                    background:linear-gradient(90deg,#2563eb,#7c3aed);
+                    color:white;
+                    padding:10px 12px;
+                    border-radius:14px 14px 4px 14px;
+                    max-width:80%;
+                    word-wrap:break-word;
+                    text-align:left;
+                ">
+                    <b>Ты:</b> ${msg}
+                </div>
+            </div>
+        `;
+
+        // Отправка запроса на сервер
+        fetch("/ai_chat",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/x-www-form-urlencoded"
+            },
+            body:"message="+encodeURIComponent(msg)
+        })
+        .then(res=>res.text())
+        .then(data=>{
+            // Ответ AI
+            chat.innerHTML += `
+                <div style="margin-bottom:10px; text-align:left;">
+                    <div style="
+                        display:inline-block;
+                        background:rgba(255,255,255,0.10);
+                        color:white;
+                        padding:10px 12px;
+                        border-radius:14px 14px 14px 4px;
+                        max-width:85%;
+                        word-wrap:break-word;
+                        border:1px solid rgba(255,255,255,0.08);
+                    ">
+                        <b>AI:</b> ${data}
+                    </div>
+                </div>
+            `;
+            chat.scrollTop = chat.scrollHeight;
+        });
+
+        msgInput.value = "";
+    }
+
+    /* Отправка сообщения по нажатию Enter */
+    document.addEventListener("DOMContentLoaded",function(){
+        let msgInput = document.getElementById("msg");
+        if(msgInput){
+            msgInput.addEventListener("keypress",function(e){
+                if(e.key === "Enter"){
+                    sendMsg();
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
