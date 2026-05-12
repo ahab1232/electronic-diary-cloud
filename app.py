@@ -208,33 +208,86 @@ def update_homework():
 @app.route("/ai_chat", methods=["POST"])
 def ai_chat():
     msg = request.form.get("message", "").lower().strip()
-    if not msg: return "Напишите вопрос."
+
+    if not msg:
+        return "Напишите вопрос."
+
     class_name = session.get("class_name")
-    if not class_name: return "Зайдите в систему как учитель или ученик."
-    
+
+    if not class_name:
+        return "Зайдите в систему как учитель или ученик."
+
     db = get_db()
     cur = db.cursor()
+
     if "распис" in msg:
-        cur.execute("SELECT week_day, lesson_number, subject FROM schedule WHERE class_name=? LIMIT 7", (class_name,))
+        cur.execute("""
+            SELECT week_day, lesson_number, subject
+            FROM schedule
+            WHERE class_name=?
+            ORDER BY id
+            LIMIT 10
+        """, (class_name,))
+
         rows = cur.fetchall()
-        if not rows: return "Расписание не найдено."
-        text = "Ближайшие уроки:<br>"
-        for r in rows: text += f"{r[0]} — урок {r[1]} — {r[2]}<br>"
+
+        if not rows:
+            db.close()
+            return "Расписание не найдено."
+
+        text = "<b>Расписание:</b><br>"
+
+        for r in rows:
+            text += f"{r['week_day']} — {r['lesson_number']} урок — {r['subject']}<br>"
+
+        db.close()
         return text
+
     if "домаш" in msg:
-        cur.execute("SELECT subject, task_text FROM homework WHERE class_name=? ORDER BY id DESC LIMIT 5", (class_name,))
+        cur.execute("""
+            SELECT subject, task_text, due_day
+            FROM homework
+            WHERE class_name=?
+            ORDER BY id DESC
+            LIMIT 5
+        """, (class_name,))
+
         rows = cur.fetchall()
-        if not rows: return "ДЗ нет."
-        text = "Домашнее задание:<br>"
-        for r in rows: text += f"{r[0]} — {r[1]}<br>"
+
+        if not rows:
+            db.close()
+            return "Домашнего задания нет."
+
+        text = "<b>Домашнее задание:</b><br>"
+
+        for r in rows:
+            text += f"{r['subject']} — {r['task_text']} ({r['due_day']})<br>"
+
+        db.close()
         return text
+
+    if "роль" in msg:
+        role = session.get("role")
+        return f"Ваша роль: {role}"
+
+    if "как меня зовут" in msg or "кто я" in msg:
+        return f"Вы: {session.get('full_name')}"
+
     db.close()
-    return "Я могу показать расписание и домашнее задание."
+
+    return """
+    Я умею:
+    <br>• Показывать расписание
+    <br>• Показывать домашнее задание
+    <br>• Говорить вашу роль
+    <br>• Говорить ваше имя
+    """
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
@@ -260,7 +313,7 @@ if __name__ == "__main__":
     if "кто я" in msg or "как меня зовут" in msg:
         
     # 2. Ответ на "Какая роль?"
-    if "роль" in msg:5
+    if "роль" in msg:
         res_role = roles_ru.get(role, role)
         return f"Ваша текущая роль: {res_role}."
 
