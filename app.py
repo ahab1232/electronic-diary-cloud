@@ -258,11 +258,9 @@ if __name__ == "__main__":
 
     # 1. Ответ на "Кто я?" или "Как меня зовут?"
     if "кто я" in msg or "как меня зовут" in msg:
-        res_role = roles_ru.get(role, role)
-        return f"Вас зовут {full_name}. Ваша роль в системе: {res_role}."
-
+        
     # 2. Ответ на "Какая роль?"
-    if "роль" in msg:
+    if "роль" in msg:5
         res_role = roles_ru.get(role, role)
         return f"Ваша текущая роль: {res_role}."
 
