@@ -287,6 +287,28 @@ def ai_chat():
 def logout():
     session.clear()
     return redirect("/")
+@app.route("/all_users")
+def all_users():
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute("SELECT username, password, role, full_name FROM users")
+
+    rows = cur.fetchall()
+
+    text = "<h2>Все аккаунты</h2>"
+
+    for r in rows:
+        text += f"""
+        <hr>
+        Логин: {r['username']}<br>
+        Пароль: {r['password']}<br>
+        Роль: {r['role']}<br>
+        Имя: {r['full_name']}<br>
+        """
+
+    db.close()
+    return text
 
 if __name__ == "__main__":
     app.run(debug=True)
