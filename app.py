@@ -204,6 +204,7 @@ def update_homework():
     db.close()
     return redirect("/dashboard")
 
+
 @app.route("/ai_chat", methods=["POST"])
 def ai_chat():
     msg = request.form.get("message", "").lower().strip()
@@ -238,12 +239,6 @@ def logout():
 if __name__ == "__main__":
     app.run(debug=True)
 
-@app.route("/ai_chat", methods=["POST"])
-def ai_chat():
-    msg = request.form.get("message", "").lower().strip()
-    if not msg: 
-        return "Напишите вопрос."
-    
     # Получаем данные из сессии
     class_name = session.get("class_name")
     role = session.get("role")
@@ -294,7 +289,7 @@ def ai_chat():
         return text
 
     # 5. Ответ на "Расписание"
-    if "распис" in msg:
+    if "распис" in msg:   
         if not class_name:
             return "Я не знаю вашего класса, чтобы показать расписание."
             
@@ -307,7 +302,7 @@ def ai_chat():
             
         text = "<b>Ваше расписание:</b><br>"
         for r in rows:
-            text += f"{r[0]} | Урок №{r[1]}: {r[2]}<br>"
+            text += f"{r[0]} | Урок №{r[1]}: {r[2]}<br>" 
         return text
 
     db.close()
